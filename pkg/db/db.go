@@ -40,6 +40,11 @@ func InitDB() error {
 
 	log.Println("Databases connected successfully")
 
+	// Apply migrations
+	if err := ApplyMigrations(WriteDB); err != nil {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
+
 	// Call the seed function to ensure the default user is created
 	seedDefaultUser()
 	return nil

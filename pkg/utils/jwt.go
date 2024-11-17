@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -45,12 +46,22 @@ func GenerateToken(email, secret string, accessTokenExpiry time.Duration, refres
 }
 
 func ValidateToken(tokenString, secret string) (*Claims, error) {
+	// Parse the token with claims
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
+
+	// Check if there was an error parsing the token
+	if err != nil {
+		fmt.Println("Error parsing token:", err)
+		return nil, fmt.Errorf("error parsing token: %v", err)
+	}
+
+	// Verify if the token is valid and if the claims can be asserted
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		fmt.Println("Token is valid, claims:", claims)
 		return claims, nil
 	} else {
-		return nil, err
+		return nil, fmt.Errorf("invalid token")
 	}
 }
