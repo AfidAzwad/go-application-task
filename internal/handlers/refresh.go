@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,31 +13,55 @@ import (
 
 // RefreshTokenHandler handles the process of refreshing JWT tokens
 func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
-	// inline struct
+	// Inline struct for decoding request
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
 	}
 
+	// Decode the incoming request
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request format", http.StatusBadRequest)
 		return
 	}
 
+	// Get the JWT secret from environment variables
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	// validating the refresh token and get the claims
 	claims, err := utils.ValidateToken(req.RefreshToken, jwtSecret)
 	if err != nil {
 		http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
 		return
 	}
-	accessTokenExpiry := time.Minute * 15 // Access token expires in 15 minutes
-	refreshTokenExpiry := time.Hour * 24  // Refresh token expires in 1 day
+
+	accessTokenExpirySecondStr := os.Getenv("ACCESS_TOKEN_EXPIRY_SECOND")
+	refreshTokenExpirySecondStr := os.Getenv("REFRESH_TOKEN_EXPIRY_SECOND")
+
+	if accessTokenExpirySecondStr == "" {
+		accessTokenExpirySecondStr = "3600" // Default to 1 hour
+	}
+	if refreshTokenExpirySecondStr == "" {
+		refreshTokenExpirySecondStr = "7200" // Default to 2 hours
+	}
+
+	// Convert the environment variables to integers
+	accessTokenExpirySecond, err := strconv.Atoi(accessTokenExpirySecondStr)
+	if err != nil {
+		log.Fatalf("Error parsing ACCESS_TOKEN_EXPIRY_SECOND: %v", err)
+	}
+
+	refreshTokenExpirySecond, err := strconv.Atoi(refreshTokenExpirySecondStr)
+	if err != nil {
+		log.Fatalf("Error parsing REFRESH_TOKEN_EXPIRY_SECOND: %v", err)
+	}
+
+	// Convert the seconds into time.Duration
+	accessTokenExpiry := time.Second * time.Duration(accessTokenExpirySecond)
+	refreshTokenExpiry := time.Second * time.Duration(refreshTokenExpirySecond)
 
 	accessToken, refreshToken, err := utils.GenerateToken(claims.Email, jwtSecret, accessTokenExpiry, refreshTokenExpiry)
 	if err != nil {
@@ -44,12 +69,15 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return
+	expiresInSeconds := int(accessTokenExpiry.Seconds())
+	refreshExpiresInSeconds := int(refreshTokenExpiry.Seconds())
+
+	// Return the generated tokens and expiry times
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"access_token":       accessToken,
 		"refresh_token":      refreshToken,
-		"expires_in":         strconv.Itoa(int(accessTokenExpiry.Seconds())),  // Expires in seconds for access token
-		"refresh_expires_in": strconv.Itoa(int(refreshTokenExpiry.Seconds())), // Expires in seconds for refresh token
+		"expires_in":         strconv.Itoa(expiresInSeconds),
+		"refresh_expires_in": strconv.Itoa(refreshExpiresInSeconds),
 	})
 }

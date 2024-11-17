@@ -6,6 +6,7 @@ import (
 	"go-application-task/pkg/db"
 	"go-application-task/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -52,8 +53,30 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessTokenExpiry := time.Minute * 15 // Access token expires in 15 minutes
-	refreshTokenExpiry := time.Hour * 24  // Refresh token expires in 1 day
+	accessTokenExpirySecondStr := os.Getenv("ACCESS_TOKEN_EXPIRY_SECOND")
+	refreshTokenExpirySecondStr := os.Getenv("REFRESH_TOKEN_EXPIRY_SECOND")
+
+	if accessTokenExpirySecondStr == "" {
+		accessTokenExpirySecondStr = "3600" // Default to 1 hour
+	}
+	if refreshTokenExpirySecondStr == "" {
+		refreshTokenExpirySecondStr = "7200" // Default to 2 hours
+	}
+
+	// Convert the environment variables to integers
+	accessTokenExpirySecond, err := strconv.Atoi(accessTokenExpirySecondStr)
+	if err != nil {
+		log.Fatalf("Error parsing ACCESS_TOKEN_EXPIRY_SECOND: %v", err)
+	}
+
+	refreshTokenExpirySecond, err := strconv.Atoi(refreshTokenExpirySecondStr)
+	if err != nil {
+		log.Fatalf("Error parsing REFRESH_TOKEN_EXPIRY_SECOND: %v", err)
+	}
+
+	// Convert the seconds into time.Duration
+	accessTokenExpiry := time.Second * time.Duration(accessTokenExpirySecond)
+	refreshTokenExpiry := time.Second * time.Duration(refreshTokenExpirySecond)
 
 	// generating a JWT token for the user
 	accessToken, refreshToken, err := utils.GenerateToken(creds.Email, jwtSecret, accessTokenExpiry, refreshTokenExpiry)
