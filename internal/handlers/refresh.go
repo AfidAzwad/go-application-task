@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"go-application-task/pkg/utils"
 )
@@ -33,8 +35,10 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
 		return
 	}
+	accessTokenExpiry := time.Minute * 15 // Access token expires in 15 minutes
+	refreshTokenExpiry := time.Hour * 24  // Refresh token expires in 1 day
 
-	accessToken, refreshToken, err := utils.GenerateToken(claims.Email, jwtSecret)
+	accessToken, refreshToken, err := utils.GenerateToken(claims.Email, jwtSecret, accessTokenExpiry, refreshTokenExpiry)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -43,7 +47,9 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Return
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"access_token":       accessToken,
+		"refresh_token":      refreshToken,
+		"expires_in":         strconv.Itoa(int(accessTokenExpiry.Seconds())),  // Expires in seconds for access token
+		"refresh_expires_in": strconv.Itoa(int(refreshTokenExpiry.Seconds())), // Expires in seconds for refresh token
 	})
 }

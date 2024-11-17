@@ -8,6 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 )
 
 // LoginHandler handles user login requests. It authenticates the user based on their email and password,
@@ -32,7 +34,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(creds.Password))
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		// User not found, return error response
+		response := map[string]interface{}{
+			"message": "The user credentials were incorrect.",
+			"type":    "error",
+			"code":    400,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized) // Set the status code
+		json.NewEncoder(w).Encode(response)    // Send the JSON response
 		return
 	}
 
@@ -42,8 +52,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	accessTokenExpiry := time.Minute * 15 // Access token expires in 15 minutes
+	refreshTokenExpiry := time.Hour * 24  // Refresh token expires in 1 day
+
 	// generating a JWT token for the user
-	accessToken, refreshToken, err := utils.GenerateToken(creds.Email, jwtSecret)
+	accessToken, refreshToken, err := utils.GenerateToken(creds.Email, jwtSecret, accessTokenExpiry, refreshTokenExpiry)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -51,7 +64,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"access_token":       accessToken,
+		"refresh_token":      refreshToken,
+		"access_expires_in":  strconv.Itoa(int(accessTokenExpiry.Seconds())),  // Expires in seconds for access token
+		"refresh_expires_in": strconv.Itoa(int(refreshTokenExpiry.Seconds())), // Expires in seconds for refresh token
 	})
 }
