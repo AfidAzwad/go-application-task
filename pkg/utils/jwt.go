@@ -12,12 +12,12 @@ type Claims struct {
 }
 
 // GenerateToken generates both access and refresh tokens
-func GenerateToken(email, secret string) (accessToken string, refreshToken string, err error) {
+func GenerateToken(email, secret string, accessTokenExpiry time.Duration, refreshTokenExpiry time.Duration) (accessToken string, refreshToken string, err error) {
 	// Access token (short expiry)
 	accessClaims := &Claims{
 		Email: email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 10).Unix(), // Access token expires in 10 minutes
+			ExpiresAt: time.Now().Add(accessTokenExpiry).Unix(),
 		},
 	}
 
@@ -31,7 +31,7 @@ func GenerateToken(email, secret string) (accessToken string, refreshToken strin
 	refreshClaims := &Claims{
 		Email: email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 3).Unix(), // Refresh token expires in 3 days
+			ExpiresAt: time.Now().Add(refreshTokenExpiry).Unix(),
 		},
 	}
 
