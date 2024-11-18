@@ -7,7 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jmoiron/sqlx"
 	"go-application-task/internal/models"
-	"go-application-task/pkg/db" // Assuming a custom DB package
+	"go-application-task/pkg/db"
 	"go-application-task/pkg/utils"
 	"net/http"
 	"os"
