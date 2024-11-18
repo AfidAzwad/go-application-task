@@ -20,7 +20,7 @@ This Go application provides a simple API for order management. The application 
 ### 1. Clone the Repository
 ### 2. Setup Environment
 ### 3. Build with `go build -o cmd/main .`
-### 4. Run with `go build -o cmd/main .`
+### 4. Run with `go run ./cmd/main.go .`
 
 By default, the API will be available at http://localhost:8180
 
