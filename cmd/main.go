@@ -32,5 +32,5 @@ func main() {
 	routerWithCors := middleware.EnableCors(router)
 
 	log.Println("Server running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", routerWithCors))
+	log.Fatal(http.ListenAndServe(":8180", routerWithCors))
 }

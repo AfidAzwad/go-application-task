@@ -19,5 +19,8 @@ func SetupRoutes() *mux.Router {
 	getOrderRoute := router.HandleFunc("/orders", handlers.ListOrdersHandler(db.ReadDB)).Methods("GET")
 	getOrderRoute.Handler(middleware.JWTMiddleware(handlers.ListOrdersHandler(db.ReadDB)))
 
+	cancelOrderRoute := router.HandleFunc("/cancel-order", handlers.CancelOrderHandler(db.WriteDB)).Methods("POST")
+	cancelOrderRoute.Handler(middleware.JWTMiddleware(handlers.CancelOrderHandler(db.WriteDB)))
+
 	return router
 }
