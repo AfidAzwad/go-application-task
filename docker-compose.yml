@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  go-app:
+    build: .
+    container_name: go-app
+    ports:
+      - "8080:8080"
+    environment:
+      - WRITE_DB_HOST=db
+      - WRITE_DB_USER=postgres
+      - WRITE_DB_PASSWORD=12345
+      - WRITE_DB_NAME=go-task-2
+      - READ_DB_HOST=db
+      - READ_DB_USER=postgres
+      - READ_DB_PASSWORD=12345
+      - READ_DB_NAME=go-task-2
+      - JWT_SECRET=FkKl6KThf0WrvH1Lstab3XDFp7F+U4tjHLufGrUGNUA=
+      - ACCESS_TOKEN_EXPIRY_SECOND=900
+      - REFRESH_TOKEN_EXPIRY_SECOND=82000
+    depends_on:
+      - db
+    networks:
+      - go-app-network
+
+  db:
+    image: postgres:13
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: go-task-2
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - go-app-network
+
+volumes:
+  db-data:
+
+networks:
+  go-app-network:
+    driver: bridge
