@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"go-application-task/internal/handlers"
 	"go-application-task/internal/middleware"
+	"go-application-task/pkg/db"
 )
 
 func SetupRoutes() *mux.Router {
@@ -14,6 +15,9 @@ func SetupRoutes() *mux.Router {
 
 	createOrderRoute := router.HandleFunc("/create_order", handlers.CreateOrderHandler).Methods("POST")
 	createOrderRoute.Handler(middleware.JWTMiddleware(createOrderRoute.GetHandler()))
+
+	getOrderRoute := router.HandleFunc("/orders", handlers.ListOrdersHandler(db.ReadDB)).Methods("GET")
+	getOrderRoute.Handler(middleware.JWTMiddleware(handlers.ListOrdersHandler(db.ReadDB)))
 
 	return router
 }

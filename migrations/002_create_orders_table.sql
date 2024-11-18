@@ -33,6 +33,8 @@ CREATE TABLE orders (
                         order_status order_status_enum NOT NULL DEFAULT 'pending',
                         delivery_fee FLOAT NOT NULL,
                         cod_fee FLOAT NOT NULL,
+                        transfer_status INT NOT NULL DEFAULT 1,
+                        archive INT NOT NULL DEFAULT 0,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         user_id INT REFERENCES users(id) ON DELETE CASCADE
 );
